@@ -1,4 +1,4 @@
-function [q, R] = naturalConvectionHorizCylinder(Tinv,Tout,Geometry,MaterialProperties)
+function [R] = naturalConvectionHorizCylinder(Tinv,Tout,Geometry,MaterialProperties)
 
 fluid = Air();
 
@@ -6,10 +6,10 @@ gbetanu2 = fluid.gbetanu2;
 Pr = fluid.Pr;
 k = fluid.k;
 
-L = Geometry.L;
+D = Geometry.D;
 A = Geometry.A;
 
-Gr = gbetanu2 * abs(Tinv - Tout) * L^3;
+Gr = gbetanu2 * abs(Tinv - Tout) * D^3;
 Ra = Gr*Pr;
 
 if Gr > 1e3 && Gr < 1e9

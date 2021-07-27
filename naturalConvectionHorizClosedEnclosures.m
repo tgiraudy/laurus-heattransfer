@@ -6,10 +6,10 @@ gbetanu2 = air.gbetanu2;
 Pr = air.Pr;
 k = air.k;
 
-L = Geometry.L;
+b = Geometry.b;
 A = Geometry.A;
 
-Gr = gbetanu2 * abs(Tinv - Tout) * L^3;
+Gr = gbetanu2 * abs(Tinv - Tout) * b^3;
 Ra = Gr*Pr;
 
 if Ra > 1e4 && Ra < 4e5
@@ -20,7 +20,7 @@ else
     disp('Correlacion para conveccion natural fuera de rango')
 end
 
-h = Nu*k/L;
+h = Nu*k/b;
 
 R = 1/(h*A);
     

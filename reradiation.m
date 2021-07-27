@@ -19,8 +19,8 @@ sb = 5.67e-8; % stefan - boltzmann (W/m^2K^4)
 Tfloor = c2k(Tfloor); %K
 Tout = c2k(Tout); %K
 
-q = surfaceArea*sb*emissivity*(Tfloor.^4 - Tout.^4);
+% q = surfaceArea*sb*emissivity*(Tfloor.^4 - Tout.^4);
 
-R = abs((Tfloor - Tout)/q);
+R = 1/(surfaceArea*sb*emissivity*(Tfloor^2 + Tout^2)*(Tfloor + Tout));
 
 end
