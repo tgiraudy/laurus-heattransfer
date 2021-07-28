@@ -73,7 +73,7 @@ airMass = air.rho*V;
 
 T(1) = Tinv(1);
 
-Titer = c2k(T);
+T = c2k(T);
 
 for tIndex = 1:nSteps; %horas
     
@@ -88,12 +88,12 @@ for tIndex = 1:nSteps; %horas
     Tdp = Tinf; % Temperatura dew point (EN REALIDAD TIENE QUE SER FUNCION DE Tinf y hr);
     epsilonSky = 0.711 + 0.56*(Tdp/100) +  0.73*(Tdp^2/100)^2; % berdahl and martin 1984 REVISAR
     Tsky = (epsilonSky)^.25*Tinf;
-    T = Titer;
     deltaT = zeros(nDofTot, 1);
     
     sunRadiationHeat =  radiationVector(tIndex)*L*D* solarAbsorptivity;
     boundaryConditions = [Tinf T0 Tsky sunRadiationHeat];
 
+    [] = newtonRaphson(T,  bc
     
     %% branches
     
