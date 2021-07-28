@@ -10,6 +10,8 @@ elements = [1 2   % Conveccion natural interna
             2 3   % Conveccion en enclosure
             1 4]; % Conveccion natural con piso
 
+
+        
 nEle = size(elements, 1);
 nNodEle = size(elements, 2);
 nNod = max(max(elements));
@@ -20,7 +22,8 @@ dofs = reshape(1:nDofTot, nDofNod, [])';
 
 
 Kele = zeros(nDofEle, nDofEle, nEle);
-T = [25 22 5.5 5 15 5 0]';
+T = [25 22 5.5 15]';
+prevT = T;
 q = zeros(nDofTot, 1);
 interstepTol = 1e-3;
 interstepError = 1;
@@ -91,6 +94,7 @@ for tIndex = 1:nSteps; %horas
     deltaT = zeros(nDofTot, 1);
     
     sunRadiationHeat =  radiationVector(tIndex)*L*D* solarAbsorptivity;
+<<<<<<< Updated upstream
     boundaryConditions = [Tinf T0 Tsky sunRadiationHeat];
 
     [] = newtonRaphson(T,  bc
@@ -101,5 +105,12 @@ for tIndex = 1:nSteps; %horas
     
 
     
+=======
+    boundaryConditions = [c2k([Tinf T0 Tsky]) sunRadiationHeat,airMass];
+        
+    T = newtonRaphson(T,prevT,boundaryConditions,elements,timeStep);
+>>>>>>> Stashed changes
     
+    prevT = T; 
+    disp(T(1))
 end

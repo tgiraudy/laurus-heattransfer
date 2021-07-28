@@ -19,7 +19,12 @@ Ra = Gr*Pr;
 if Ra > 1e5 && Ra < 1e11
     Nu = 0.27.*Ra.^(1/4);
 else
-    disp('Correlacion para conveccion natural fuera de rango')
+    Nu = 0.27.*Ra.^(1/4);
+%     disp('Correlacion para conveccion natural fuera de rango')
+end
+
+if Tinv < Tout
+    Nu = -Nu;
 end
 
 h = Nu*k/characteristicLength;
