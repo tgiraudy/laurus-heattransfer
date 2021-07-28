@@ -1,4 +1,4 @@
-function [R] = reradiation(Tfloor, Tout, Geometry, MaterialProperties)
+function [hr] = reradiation(Tfloor, Tout, Geometry, MaterialProperties)
 
 %%%%%%
 % inputs
@@ -21,6 +21,6 @@ Tout = c2k(Tout); %K
 
 % q = surfaceArea*sb*emissivity*(Tfloor.^4 - Tout.^4);
 
-R = 1/(surfaceArea*sb*emissivity*(Tfloor^2 + Tout^2)*(Tfloor + Tout));
+hr = surfaceArea*sb*emissivity;
 
 end

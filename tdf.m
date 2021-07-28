@@ -8,124 +8,98 @@ Options.Albedo = 1;
 
 elements = [1 2   % Conveccion natural interna
             2 3   % Conveccion en enclosure
-            3 4   % Conveccion natural externa
-            1 5   % Conveccion natural con piso
-            5 6   % Conveccion natural piso-suelo
-            5 7]; % Reradiacion piso-cielo
+            1 4]; % Conveccion natural con piso
 
 nEle = size(elements, 1);
 nNodEle = size(elements, 2);
 nNod = max(max(elements));
 nDofNod = 1;
 nDofEle = nDofNod*nNodEle;
+nDofTot = nDofNod*nNod;
+dofs = reshape(1:nDofTot, nDofNod, [])';
 
 
-Tseed = 25;
 Kele = zeros(nDofEle, nDofEle, nEle);
-T = Tseed*ones(nNod, 1);
-q = zeros(nNod, 1);
-        
+T = [25 22 5.5 5 15 5 0]';
+q = zeros(nDofTot, 1);
+interstepTol = 1e-3;
+interstepError = 1;
+
+beta = 1;
+fixed = false(nDofTot, 1);
+fixed([4 6 7]) = true;
+
+startDay = 180;
+nDays = 3;
+
+
+
+endTime = 24*nDays; %h
+time = 0:endTime;
+nSteps = length(time);
+
+TinfData = 5*ones(nSteps, 1); % provisional
+T0Data = 10*ones(nSteps, 1); 
+radiationVector = zeros(1, nSteps);
+Tinv = zeros(nSteps, 1);
+Tinv(1) = 20;
+
+
+
+%% branches al invernadero
+
+[branchElements, branchDirection] = find(elements == 1); % 1 es el indice del aire ambiente del invernadero
+
+
 %% Geometria        
-L = 15;
-D = 10;
+L = 6;
+D = 4;
+V = L*pi*D^2/4/2;
+
 bAislacion = 0.02;
 bSuelo = 0.2;
         
-k2c = @(T) T - 273.15;        
-% si se agregan costados tiene que entrar en el calculo de elementos 1, 2 y
-% 3;
+c2k = @(T) T + 273.15;        
+% si se agregan costados tiene que entrar en el calculo de elementos 1, 2 y BC;
 
 %% Propiedades
 
 solarAbsorptivity = 0.5;
 floorEmissivity = 0.5;
+air = Air();
 
-%% DATA
-
-% separar el vector tiempo en dias
-
-nDays = 3;
-% for iDays = 1:nDays
-% hour = timeVector;
-% day = 196;
-% radiationVector = zeros(1, length(hour));
-% 
-% for i = 1:size(radiationVector, 2)
-%     radiationVector(i) = SunRadiation([0 1 0], hour(i), day, Options);
-% end
-% end
-
-endTime = 72; %h
-timeStep = 0.5; % h
-
-for time = 0:timeStep:endTime; %horas
+airMass = air.rho*V;
 
 
-fixed = [4 6 7];
+T(1) = Tinv(1);
 
-Tinf = TinfData(tIndex);
-hr = hrData(tIndex);
-Tdp = Tinf; % Temperatura dew point (EN REALIDAD TIENE QUE SER FUNCION DE Tinf y hr);
-epsilonSky = 0.711 + 0.56*(Tdp/100) +  0.73*(Tdp^2/100)^2; % berdahl and martin 1984 REVISAR
-Tsky = (epsilonSky)^.25*Tinf;
-T(fixed) = [Tinf T0 Tsky];
-q(5) = radiationVector(tIndex)*L*D*solarAbsorptivity;
+Titer = c2k(T);
 
+for tIndex = 1:nSteps; %horas
+    
+    day = startDay + floor(time(tIndex)/24);
+    hour = rem(time(tIndex),24);
+    %
+    timeStep = 1;
+    radiationVector(tIndex) = SunRadiation([0 1 0], hour, day, Options);
+    Tinf = TinfData(tIndex);
+    T0 = T0Data(tIndex);
+    %         hr = hrData(tIndex);
+    Tdp = Tinf; % Temperatura dew point (EN REALIDAD TIENE QUE SER FUNCION DE Tinf y hr);
+    epsilonSky = 0.711 + 0.56*(Tdp/100) +  0.73*(Tdp^2/100)^2; % berdahl and martin 1984 REVISAR
+    Tsky = (epsilonSky)^.25*Tinf;
+    T = Titer;
+    deltaT = zeros(nDofTot, 1);
+    
+    sunRadiationHeat =  radiationVector(tIndex)*L*D* solarAbsorptivity;
+    boundaryConditions = [Tinf T0 Tsky sunRadiationHeat];
 
-%% Resistance calculation
+    
+    %% branches
+    
+    qBranches = 0;
+    
 
-R1 = 1;
-
-Geometry.L = L;
-Geometry.Di = D;
-Geometry.b = bAislacion;
-Geometry.theta = pi; %semicylinder
-R2 = naturalConvectionCylinderClosedEnclosures(T(2), T(3), Geometry, []);
-
-Geometry.D = D;
-Geometry.A = pi*D*L/2;
-R3 = naturalConvectionHorizCylinder(T(3), T(4), Geometry, [])/2;
-
-Geometry.D = D;
-Geometry.L = L;
-Geometry.A = L*D;
-Geometry.P = 2*L+2*D;
-R4 = naturalConvectionHorizFlatPlate(T(1),T(5),Geometry,[]);
-
-Geometry.b = bSuelo;
-Geometry.A = L*D;
-R5 = naturalConvectionHorizClosedEnclosures(T(5),T(6),Geometry,[]); 
-
-Geometry.A = L*D;
-MaterialProperties.emissivity = floorEmissivity;
-R6 = reradiation(T(5), Tsky, Gometry, MaterialProperties);
-
-
-R = [R1 R2 R3 R4 R5 R6];
-
-%% Ensamble de matriz
-
-for iEle = 1:nEle
-    eleDofs = dofs(elements(iEle,:),:);
-    Kele(:,:, iEle) = [1 -1; -1 1]/R(iEle);
-    K(eleDofs, eleDofs) = K(eleDofs, eleDofs) + Kele(:,:, iEle);
-end
-
-
-Tc = T(fixed);
-qc = q(~fixed);
-
-Kxx = K(~fixed, ~fixed);
-Kxc = K(~fixed, fixed);
-Kcx = K(fixed, ~fixed);
-Kcc = K(fixed, fixed);
-
-Tx = Kxx\(qc - Kxc*Tc);
-qx = Kcc*Tc + Kcx*Tx;
-
-q(fixed) = qx;
-T(~fixed) = Tx;
-
-
-
+    
+    
 end

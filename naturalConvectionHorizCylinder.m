@@ -12,13 +12,16 @@ A = Geometry.A;
 Gr = gbetanu2 * abs(Tinv - Tout) * D^3;
 Ra = Gr*Pr;
 
-if Gr > 1e3 && Gr < 1e9
-    Nu = 0.53 * (Ra) ^ 0.25 ;
+if Ra < 1e12
+    Nu = (0.6 + 0.387*Ra^(1/6)/((1+(0.559/Pr)^(9/16))^(8/27)))^2;
 else
     disp('Correlacion para conveccion natural en cilindros fuera de rango')
 end
 
-h = Nu*k/L;
+if Tinv < Tout
+    Nu = -Nu;
+end
+h = Nu*k/D;
 
 q = h * (Tinv - Tout) * A;
 R = 1/(h*A);    

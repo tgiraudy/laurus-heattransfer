@@ -22,7 +22,6 @@ Ra = Gr*Pr;
 %p 321 kreith heat transfer
 
 adimCheck = (log(Do./Di)./(b.^.75.*(Do.^(-3/5) + Di.^(-3/5)).^(5/4))).^4.*Ra;
-
 if Pr >= .7 && Pr <6000 && adimCheck < 1e7 && adimCheck > 1e1;
     kEff = k*0.386*(log(Do./Di)./(b.^.75.*(Do.^(-3/5) + Di.^(-3/5)).^(5/4))).*(Ra.^(1/4))*((Pr/(0.861+Pr)).^(1/4));
 else
@@ -30,8 +29,12 @@ else
 end
 
 
+if Tinv < Tout
+    kEff = -kEff;
+end
+
+
 % resistencia medio cilindro
 R = log(Do./Di)./(theta*kEff*L);
 % calor
-
 end
